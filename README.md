@@ -1,5 +1,3 @@
-# reloadly-php
-
 ## Documentation
 
 The documentation for the Reloadly API can be found [here][apidocs].
