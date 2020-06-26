@@ -1,0 +1,25 @@
+{
+    "name": "daibe/reloadly-php",
+    "description": "A PHP library for communicating with the Reloadly API.",
+    "license": "MIT",
+    "keywords": ["reloadly", "rest", "airtime", "api", "topup", "web service"],
+    "homepage": "http://github.com/daibe/reloadly-php",
+    "type": "library",
+    "require": {
+        "php": "^7.2.5",
+        "guzzlehttp/guzzle": "^6.3",
+        "ext-json": "*"
+    },
+    "authors": [
+        {
+            "name": "Daibe",
+            "email": "daibe@tutanota.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "ReloadlyPHP\\": "src/"
+        }
+    },
+    "minimum-stability": "dev"
+}
