@@ -31,7 +31,8 @@ use function getenv;
 
 class Client {
 
-    const API_BASE_URI_PRODUCTION = 'https://topups.reloadly.com';
+    const API_BASE_URI_PRODUCTION   = 'https://topups.reloadly.com';
+    const API_BASE_URI_SANDBOX      = 'https://topups-sandbox.reloadly.com';
     const API_ENDPOINT_AUTHENTICATE = 'https://auth.reloadly.com/oauth/token';
 
     const API_ENDPOINT_TOPUP = '/topups';
@@ -40,6 +41,7 @@ class Client {
     const ENV_CLIENT_SECRET = 'RELOADLY_CLIENT_SECRET';
     const ENV_AUDIENCE      = 'RELOADLY_AUDIENCE';
     const ENV_GRANT_TYPE    = 'RELOADLY_GRANT_TYPE';
+    const ENV_MODE          = 'APP_ENV';
 
     protected $clientId;
     protected $clientSecret;
@@ -49,7 +51,7 @@ class Client {
     protected $httpClient;
     protected $environment;
 
-    protected $session;
+    protected $accessToken;
 
     /**
      * Initializes the Reloadly Client
@@ -77,15 +79,14 @@ class Client {
         $this->grantType    = $this->getArg($grantType, self::ENV_GRANT_TYPE);
         $this->audience     = $this->getArg($audience, self::ENV_AUDIENCE);
 
-        $this->session      = new Session();
-
         if (!$this->clientId || !$this->clientSecret) {
             throw new Exception('Credentials are required to create a client.');
         }
 
-        $this->httpClient = ($httpClient) ? $httpClient : new HttpClient(['base_uri' => Client::API_BASE_URI_PRODUCTION]);
+        //$this->httpClient = ($httpClient) ? $httpClient : new HttpClient(['base_uri' => Client::API_BASE_URI_PRODUCTION]);
+        $this->httpClient = ($httpClient) ? $httpClient : new HttpClient(['base_uri' => $this->getBaseUri()]);
 
-        if (!$this->session->exists()) {
+        if (!$this->accessToken) {
             $this->authenticate($clientId, $clientSecret);
         }
 
@@ -123,26 +124,29 @@ class Client {
             "audience"      => $this->audience
         ];
 
-        $response = $this->request("post", Client::API_ENDPOINT_AUTHENTICATE, $params, [], [], null, null, 2.0, true);
+        $headers['Content-Type'] = 'application/json';
 
-        if ($response == null || $response->getContent()->access_token == null) return;
 
-        $this->session->set($response->getContent()->access_token);
+        $res = $this->httpClient->request('POST', Client::API_ENDPOINT_AUTHENTICATE, $params);
+
+        $response = new Response($res->getStatusCode(), $res->getBody()->getContents(), $res->getHeaders());
+
+        if ($response != null && $response->getContent()->access_token != null)
+            $this->accessToken = $response->getContent()->access_token;
     }
 
     /**
      * Makes a request to the Reloadly API using the configured http client
      * Authentication information is automatically added if none is provided
      *
-     * @param   string      $method     HTTP Method
-     * @param   string      $uri        Fully qualified url
-     * @param   string[]    $params     Query string parameters
-     * @param   string[]    $data       POST body data
-     * @param   string[]    $headers    HTTP Headers
-     * @param   string|null $clientId
-     * @param   string|null $clientSecret
-     * @param   int         $timeout    Timeout in seconds
-     * @param   bool        $authenticate should attempt authentication after 401
+     * @param string $method HTTP Method
+     * @param string $uri Fully qualified url
+     * @param string[] $params Query string parameters
+     * @param string[] $data POST body data
+     * @param string[] $headers HTTP Headers
+     * @param string|null $clientId
+     * @param string|null $clientSecret
+     * @param int $timeout Timeout in seconds
      * @return  Response|null
      */
     public function request(
@@ -153,8 +157,7 @@ class Client {
         array   $headers        = [],
         string  $clientId       = null,
         string  $clientSecret   = null,
-        int     $timeout        = null,
-        bool    $authenticate   = true
+        int     $timeout        = null
     ) : ?Response
     {
         $options = [];
@@ -171,25 +174,17 @@ class Client {
 
         $headers['Accept'] = 'application/com.reloadly.topups-v1+json';
 
-
         if (!empty($params)) {
-            if ($authenticate) {
-                $options['query'] = array_merge_recursive($options, $params);
-            }
-            else {
-                $options['query'] = $params;
-            }
+            $options['query'] = $params;
         }
 
         try {
 
-            if ($this->session->exists()) {
-                $headers['Authorization'] = 'Bearer '.$this->session->get();
+            if ($this->accessToken) {
+                $headers['Authorization'] = 'Bearer '.$this->accessToken;
             }
             else {
-                if (!$authenticate) {
-                    $this->authenticate($clientId, $clientSecret);
-                }
+                $this->authenticate($clientId, $clientSecret);
             }
 
             $options['headers'] = $headers;
@@ -202,7 +197,7 @@ class Client {
         } catch (ClientException | RequestException | GuzzleExceptionA $e) {
             if ($e->hasResponse()) {
 
-                if ($e->getResponse()->getStatusCode() == 401 && !$authenticate) {
+                if ($e->getResponse()->getStatusCode() == 401) {
                     $this->authenticate($clientId, $clientSecret);
                 }
             }
@@ -247,12 +242,19 @@ class Client {
         $this->httpClient = $httpClient;
     }
 
-    /**
-     * @return Balance|null
-     */
-    public function getBalance() : ?Balance {
+    public function getBaseUri()
+    {
+        return ($this->getArg(null, self::ENV_MODE) == "prod")
+            ? Client::API_BASE_URI_PRODUCTION
+            : Client::API_BASE_URI_SANDBOX;
+    }
 
-        $response = $this->request("GET", "https://topups.reloadly.com/accounts/balance");
+    /**
+     * Returns account available balance
+     */
+    public function getBalance()  {
+
+        $response = $this->request("GET", "/accounts/balance");
 
         return Balance::fromResponse($response);
     }
@@ -270,7 +272,7 @@ class Client {
             "amount" => $amount
         ];
 
-        $response = $this->request("POST", "https://topups.reloadly.com/operators/fx-rate", [], $data);
+        $response = $this->request("POST", "/operators/fx-rate", [], $data);
 
         return FxRate::fromResponse($response);
     }
@@ -281,7 +283,7 @@ class Client {
      */
     public function getCountries() : array {
 
-        $response = $this->request("GET", "https://topups.reloadly.com/countries");
+        $response = $this->request("GET", "/countries");
 
         $countries = [];
 
@@ -298,12 +300,17 @@ class Client {
 
 
     /**
-     * @param string $isoName
-     * @return Country
+     * Retrieves country details by querying Reloadly using the country's ISO 3166-1 code.
+     *
+     * e.g: getCountryByIso("CD");
+     * Where `CD` is the ISO 3166-1 code for the Democratic Republic of Congo.
+     *
+     * @param   string $isoName
+     * @return  Country
      */
     public function getCountryByIso(string $isoName) : ?Country {
 
-        $response = $this->request("GET", "https://topups.reloadly.com/countries/".strtoupper($isoName));
+        $response = $this->request("GET", "/countries/".strtoupper($isoName));
 
         return Country::fromResponse($response);
     }
@@ -327,7 +334,7 @@ class Client {
             "includeBundles" => $includeBundles
         ];
 
-        $response = $this->request("GET", "https://topups.reloadly.com/operators", $params);
+        $response = $this->request("GET", "/operators", $params);
 
         $operators = [];
 
@@ -366,7 +373,7 @@ class Client {
             "includeBundles" => $includeBundles
         ];
 
-        $response = $this->request("GET", "https://topups.reloadly.com/operators/".$operator_id, $params);
+        $response = $this->request("GET", "/operators/".$operator_id, $params);
 
         return Operator::fromResponse($response);
     }
@@ -382,15 +389,13 @@ class Client {
      */
     public function getOperatorByPhoneNumber(string $phoneNumber, string $countryIso, bool $suggestedAmounts = true, bool $suggestedAmountsMap = true, bool $includeBundles = true) : ?Operator {
 
-        // https://topups.reloadly.com/operators/auto-detect/phone/+50936377111/countries/HT?&includeBundles=true
-
         $params = [
             "suggestedAmounts" => $suggestedAmounts,
             "suggestedAmountsMap" => $suggestedAmountsMap,
             "includeBundles" => $includeBundles
         ];
 
-        $response = $this->request("GET", "https://topups.reloadly.com/operators/auto-detect/phone/{$phoneNumber}/countries/".strtoupper($countryIso), $params);
+        $response = $this->request("GET", "/operators/auto-detect/phone/{$phoneNumber}/countries/".strtoupper($countryIso), $params);
 
         var_dump($response);
 
@@ -408,15 +413,13 @@ class Client {
      */
     public function getOperatorsByCountryIso(string $countryIso, bool $suggestedAmounts = true, bool $suggestedAmountsMap = true, bool $includeBundles = true) : ?array {
 
-        // https://topups.reloadly.com/operators/countries/HT
-
         $params = [
             "suggestedAmounts" => $suggestedAmounts,
             "suggestedAmountsMap" => $suggestedAmountsMap,
             "includeBundles" => $includeBundles
         ];
 
-        $response = $this->request("GET", "https://topups.reloadly.com/operators/countries/".strtoupper($countryIso), $params);
+        $response = $this->request("GET", "/operators/countries/".strtoupper($countryIso), $params);
 
         $operators = [];
 
@@ -447,14 +450,12 @@ class Client {
      */
     public function getPromotions(int $page = 1, int $size = 50) : ?array {
 
-        // https://topups.reloadly.com/promotions?page=1&size=3
-
         $params = [
             "page" => $page,
             "size" => $size
         ];
 
-        $response = $this->request("GET", "https://topups.reloadly.com/promotions", $params);
+        $response = $this->request("GET", "/promotions", $params);
 
         $promotions = [];
 
@@ -484,9 +485,7 @@ class Client {
      */
     public function getPromotionsByCountryIso(string $country_iso) : ?array {
 
-        // https://topups.reloadly.com/promotions/country-codes/{countryCode}
-
-        $response = $this->request("GET", "https://topups.reloadly.com/promotions/country-codes/".$country_iso);
+        $response = $this->request("GET", "/promotions/country-codes/".$country_iso);
 
         $promotions = [];
 
@@ -516,9 +515,7 @@ class Client {
      */
     public function getPromotionsByOperator(int $operator_id) : ?array {
 
-        // https://topups.reloadly.com/promotions/operators/129
-
-        $response = $this->request("GET", "https://topups.reloadly.com/promotions/operators/".$operator_id);
+        $response = $this->request("GET", "/promotions/operators/".$operator_id);
 
         $promotions = [];
 
@@ -548,9 +545,7 @@ class Client {
      */
     public function getPromotionById(int $promotion_id) : ?Promotion {
 
-        // https://topups.reloadly.com/promotions/5
-
-        $response = $this->request("GET", "https://topups.reloadly.com/promotions/".$promotion_id);
+        $response = $this->request("GET", "/promotions/".$promotion_id);
 
         return Promotion::fromResponse($response);
     }
@@ -565,8 +560,6 @@ class Client {
      */
     public function getTransactions(DateTimeInterface $start_date_time, DateTimeInterface $end_date_time, int $page = 1, int $size = 50) : ?array {
 
-        // https://topups.reloadly.com/topups/reports/transactions?page=1&size=1&startTime=2018-06-01 00:00:00&endTime=2018-06-26 23:59:59
-
         $params = [
             "page" => $page,
             "size" => $size,
@@ -574,7 +567,7 @@ class Client {
             "endTime" => $end_date_time->format("Y-m-d H:i:s"),
         ];
 
-        $response = $this->request("GET", "https://topups.reloadly.com/topups/reports/transactions", $params);
+        $response = $this->request("GET", "/topups/reports/transactions", $params);
 
         $transactions = [];
 
@@ -604,13 +597,10 @@ class Client {
      */
     public function getTransactionById(int $transaction_id) : ?Transaction {
 
-        // https://topups.reloadly.com/topups/reports/transactions/{transactionId}
-
-        $response = $this->request("GET", "https://topups.reloadly.com/topups/reports/transactions/".$transaction_id);
+        $response = $this->request("GET", "/topups/reports/transactions/".$transaction_id);
 
         return Transaction::fromResponse($response);
     }
-
 
     /**
      * @param int $operator_id
@@ -644,14 +634,6 @@ class Client {
         return TopUpResponse::fromResponse($response);
     }
 
-    /*
-
-    protected function getDiscounts(int $page = 1, int $size = 10, int $operator_id = null): \Twilio\Rest\Api\V2010\Account\CallList {
-        return $this->api->v2010->account->calls;
-    }
-
-    */
-
     /**
      * Provide a friendly representation
      *
@@ -660,10 +642,4 @@ class Client {
     public function __toString(): string {
         return '[Client ' . $this->getClientId() . ']';
     }
-
 }
-
-
-
-
-
