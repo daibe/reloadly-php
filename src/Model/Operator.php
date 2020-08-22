@@ -91,11 +91,11 @@ class Operator
     private $promotions;
 
 
-    public static function fromJson($json) : ?Operator
+    public static function fromResponseData($data) : ?Operator
     {
         $operator = new Operator();
 
-        foreach ($json as $key => $value) {
+        foreach ($data as $key => $value) {
             $key = "set".$key;
 
             if (method_exists($operator, $key)) {
@@ -109,7 +109,7 @@ class Operator
 
     public static function fromResponse(?Response $response) : ?Operator
     {
-        return ($response != null && $response->getContent() != null) ? Operator::fromJson($response->getContent()) : null;
+        return ($response != null && $response->getContent() != null) ? Operator::fromResponseData($response->getContent()) : null;
     }
 
     /**
@@ -131,9 +131,9 @@ class Operator
     }
 
     /**
-     * @return string
+     * @return string|null
      */
-    public function getName(): string
+    public function getName(): ?string
     {
         return $this->name;
     }
@@ -142,7 +142,7 @@ class Operator
      * @param string $name
      * @return Operator
      */
-    public function setName(string $name): Operator
+    public function setName(?string $name): Operator
     {
         $this->name = $name;
         return $this;

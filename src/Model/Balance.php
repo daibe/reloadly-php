@@ -1,26 +1,23 @@
 <?php
 namespace ReloadlyPHP\Model;
 
-
 use DateTime;
 use DateTimeInterface;
 use Exception;
 use ReloadlyPHP\Http\Response;
+use stdClass;
 
 /**
  * Class Balance
  * @package ReloadlyPHP\Model
  *
- * @property $balance string
- * @property $currency_code string
- * @property $currency_name string
- * @property $updated_at DateTime
+ * @property float $balance
+ * @property string $currency_code
+ * @property string $currency_name
+ * @property DateTime $updated_at
  */
 class Balance
 {
-
-    // {"balance":0.00,"currencyCode":"USD","currencyName":"US Dollar","updatedAt":"2020-06-03 07:45:48"}
-
     private $balance;
     private $currency_code;
     private $currency_name;
@@ -33,7 +30,7 @@ class Balance
      * @param $currency_name
      * @param $updated_at
      */
-    public function __construct($balance, $currency_code, $currency_name, $updated_at)
+    public function __construct($balance = null, $currency_code = null, $currency_name = null, $updated_at = null)
     {
         $this->setBalance($balance);
         $this->setCurrencyCode($currency_code);
@@ -42,30 +39,34 @@ class Balance
     }
 
 
-    public static function fromJson($json) : ?Balance
+    public static function fromResponseData(stdClass $data) : ?Balance
     {
-        return new Balance($json->balance, $json->currencyCode, $json->currencyName, $json->updatedAt);
+        return (new Balance())
+                ->setBalance($data->balance)
+                ->setCurrencyCode($data->currencyCode)
+                ->setCurrencyName($data->currencyName)
+                ->setUpdatedAt($data->updatedAt);
     }
 
 
     public static function fromResponse(?Response $response) : ?Balance
     {
-        return ($response != null && $response->getContent() != null) ? Balance::fromJson($response->getContent()) : null;
+        return ($response != null && $response->getContent() != null) ? Balance::fromResponseData($response->getContent()) : null;
     }
 
     /**
-     * @return string
+     * @return float|null
      */
-    public function getBalance() : string
+    public function getBalance() : ?float
     {
         return $this->balance;
     }
 
     /**
-     * @param mixed $balance
+     * @param float $balance
      * @return Balance
      */
-    public function setBalance($balance)
+    public function setBalance(?float $balance)
     {
         $this->balance = strval($balance);
         return $this;
@@ -83,7 +84,7 @@ class Balance
      * @param string $currency_code
      * @return $this
      */
-    public function setCurrencyCode(string $currency_code)
+    public function setCurrencyCode(?string $currency_code)
     {
         $this->currency_code = $currency_code;
         return $this;
@@ -101,7 +102,7 @@ class Balance
      * @param string $currency_name
      * @return $this
      */
-    public function setCurrencyName(string $currency_name)
+    public function setCurrencyName(?string $currency_name)
     {
         $this->currency_name = $currency_name;
         return $this;

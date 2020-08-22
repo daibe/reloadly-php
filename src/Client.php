@@ -1,6 +1,4 @@
 <?php
-
-
 namespace ReloadlyPHP;
 
 
@@ -8,9 +6,11 @@ use DateTimeInterface;
 use Exception;
 use \GuzzleHttp\Client as HttpClient;
 use GuzzleHttp\Exception\ClientException;
-use GuzzleHttp\Exception\GuzzleException as GuzzleExceptionA;
+use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\RequestOptions;
+use ReloadlyPHP\Exception\AuthException;
+use ReloadlyPHP\Exception\ReloadlyException;
 use ReloadlyPHP\Http\Response;
 use ReloadlyPHP\Model\Balance;
 use ReloadlyPHP\Model\Country;
@@ -31,6 +31,7 @@ use function getenv;
 
 class Client {
 
+    const API_RELOADLY_AUDIENCE     = 'client_credentials';
     const API_BASE_URI_PRODUCTION   = 'https://topups.reloadly.com';
     const API_BASE_URI_SANDBOX      = 'https://topups-sandbox.reloadly.com';
     const API_ENDPOINT_AUTHENTICATE = 'https://auth.reloadly.com/oauth/token';
@@ -56,62 +57,62 @@ class Client {
     /**
      * Initializes the Reloadly Client
      *
-     * @param   string|null     $clientId
-     * @param   string|null     $clientSecret
-     * @param   string|null     $grantType
-     * @param   string|null     $audience
-     * @param   HttpClient      $httpClient HttpClient, defaults to CurlClient
-     * @param   mixed[]         $environment Environment to look for auth details, defaults to $_ENV
-     * @throws  Exception       If valid authentication is not present
+     * @param   string|null   $clientId
+     * @param   string|null   $clientSecret
+     * @param   bool          $debug
+     * @param   mixed[]       $environment Environment to look for auth details, defaults to $_ENV
+     * @throws  Exception    If valid authentication is not present
      */
     public function __construct(
         string      $clientId       = null,
         string      $clientSecret   = null,
-        string      $grantType      = null,
-        string      $audience       = null,
-        HttpClient  $httpClient     = null,
+        bool        $debug          = true,
         array       $environment    = null
     ) {
-        $this->environment  = $environment ?: getenv();
+        $this->environment  = $environment ? $environment : getenv();
+        $audience           = ($debug)
+                                ? self::API_BASE_URI_SANDBOX
+                                : self::API_BASE_URI_PRODUCTION;
 
         $this->clientId     = $this->getArg($clientId, self::ENV_CLIENT_ID);
         $this->clientSecret = $this->getArg($clientSecret, self::ENV_CLIENT_SECRET);
-        $this->grantType    = $this->getArg($grantType, self::ENV_GRANT_TYPE);
-        $this->audience     = $this->getArg($audience, self::ENV_AUDIENCE);
+        $this->grantType    = $this->getArg(self::API_RELOADLY_AUDIENCE, self::ENV_GRANT_TYPE, true);
+        $this->audience     = $this->getArg($audience, self::ENV_AUDIENCE, true);
 
         if (!$this->clientId || !$this->clientSecret) {
-            throw new Exception('Credentials are required to create a client.');
+            throw new ReloadlyException('Credentials are required to create a client.');
         }
 
-        //$this->httpClient = ($httpClient) ? $httpClient : new HttpClient(['base_uri' => Client::API_BASE_URI_PRODUCTION]);
-        $this->httpClient = ($httpClient) ? $httpClient : new HttpClient(['base_uri' => $this->getBaseUri()]);
+        $this->httpClient = new HttpClient(['base_uri' => $this->getBaseUri()]);
 
         if (!$this->accessToken) {
             $this->authenticate($clientId, $clientSecret);
         }
-
     }
 
     /**
      * Determines argument value accounting for environment variables.
      *
-     * @param   string      $arg The constructor argument
-     * @param   string      $envVar The environment variable name
+     * @param string $arg The constructor argument
+     * @param string $envVar The environment variable name
+     * @param bool $prioritizeEnv
      * @return  string|null Argument value
      */
-    public function getArg(?string $arg, string $envVar): ?string {
-        if ($arg) {
-            return $arg;
+    public function getArg(?string $arg, string $envVar, bool $prioritizeEnv = false): ?string {
+        $value = (!$arg) ? : $arg;
+
+        if (array_key_exists($envVar, $this->environment) && !$prioritizeEnv) {
+            $value = $this->environment[$envVar];
         }
 
-        if (array_key_exists($envVar, $this->environment)) {
-            return $this->environment[$envVar];
-        }
-
-        return null;
+        return $value;
     }
 
-
+    /**
+     * @param string|null $clientId
+     * @param string|null $clientSecret
+     * @throws AuthException
+     */
     private function authenticate(string $clientId = null, string $clientSecret = null)
     {
         $clientId       = $clientId ?: $this->clientId;
@@ -126,13 +127,18 @@ class Client {
 
         $headers['Content-Type'] = 'application/json';
 
+        try {
 
-        $res = $this->httpClient->request('POST', Client::API_ENDPOINT_AUTHENTICATE, $params);
+            $res = $this->httpClient->request('POST', Client::API_ENDPOINT_AUTHENTICATE, $params);
 
-        $response = new Response($res->getStatusCode(), $res->getBody()->getContents(), $res->getHeaders());
+            $response = new Response($res->getStatusCode(), $res->getBody()->getContents(), $res->getHeaders());
 
-        if ($response != null && $response->getContent()->access_token != null)
-            $this->accessToken = $response->getContent()->access_token;
+            if ($response != null && $response->getContent()->access_token != null)
+                $this->accessToken = $response->getContent()->access_token;
+
+        } catch (GuzzleException $exception) {
+            throw new AuthException($exception->getMessage(), $exception->getCode());
+        }
     }
 
     /**
@@ -148,6 +154,8 @@ class Client {
      * @param string|null $clientSecret
      * @param int $timeout Timeout in seconds
      * @return  Response|null
+     * @throws AuthException
+     * @throws ReloadlyException
      */
     public function request(
         string  $method,
@@ -157,53 +165,43 @@ class Client {
         array   $headers        = [],
         string  $clientId       = null,
         string  $clientSecret   = null,
-        int     $timeout        = null
+        int     $timeout        = 0
     ) : ?Response
     {
         $options = [];
 
-        $headers['User-Agent'] = 'reloadly-php/'.VersionInfo::string().'(PHP '.PHP_VERSION.')';
+        $headers['User-Agent']  = 'reloadly-php/'.VersionInfo::string().'(PHP '.PHP_VERSION.')';
+        $headers['Accept']      = 'application/com.reloadly.topups-v1+json';
 
-        if ($method === 'POST') {
-            if (!array_key_exists('Content-Type', $headers)) {
-                $headers['Content-Type'] = 'application/x-www-form-urlencoded';
-            }
+        if ($method === 'POST')
+            $options[RequestOptions::JSON] = $data;
 
-            $options['form_params'] = $data;
-        }
-
-        $headers['Accept'] = 'application/com.reloadly.topups-v1+json';
-
-        if (!empty($params)) {
+        if (!empty($params))
             $options['query'] = $params;
-        }
 
         try {
 
-            if ($this->accessToken) {
+            if ($this->accessToken)
                 $headers['Authorization'] = 'Bearer '.$this->accessToken;
-            }
-            else {
+            else
                 $this->authenticate($clientId, $clientSecret);
-            }
 
             $options['headers'] = $headers;
-            $options['timeout'] = ($timeout != null) ? $timeout : 2.0;
+            if ($timeout > 0) $options['timeout'] = $timeout;
 
             $response = $this->getHttpClient()->request($method, $uri, $options);
 
             return new Response($response->getStatusCode(), $response->getBody()->getContents(), $response->getHeaders());
 
-        } catch (ClientException | RequestException | GuzzleExceptionA $e) {
-            if ($e->hasResponse()) {
-
-                if ($e->getResponse()->getStatusCode() == 401) {
-                    $this->authenticate($clientId, $clientSecret);
-                }
+        } catch (ClientException | RequestException $e) {
+            if ($e->getResponse()->getStatusCode() == 401) {
+                $this->authenticate($clientId, $clientSecret);
             }
+            return null;
         }
-
-        return null;
+        catch (GuzzleException $e) {
+            throw new ReloadlyException($e->getMessage(), $e->getCode());
+        }
     }
 
     /**
@@ -244,7 +242,8 @@ class Client {
 
     public function getBaseUri()
     {
-        return ($this->getArg(null, self::ENV_MODE) == "prod")
+        $envMode = $this->getArg(null, self::ENV_MODE);
+        return (in_array(strtolower($envMode), ["prod", "production"]))
             ? Client::API_BASE_URI_PRODUCTION
             : Client::API_BASE_URI_SANDBOX;
     }
@@ -252,52 +251,45 @@ class Client {
     /**
      * Returns account available balance
      */
-    public function getBalance()  {
-
+    public function getBalance()
+    {
         $response = $this->request("GET", "/accounts/balance");
-
         return Balance::fromResponse($response);
     }
 
 
     /**
-     * @param int $operator_id
-     * @param int $amount
-     * @return FxRate|null
+     * @param   int $operator_id
+     * @param   int $amount
+     * @return  FxRate|null
      */
-    public function getForeignExchangeRates(int $operator_id, int $amount): ?FxRate {
-
+    public function getFxRate(int $operator_id, int $amount): ?FxRate
+    {
         $data = [
             "operatorId" => $operator_id,
-            "amount" => $amount
+            "amount"     => $amount
         ];
 
         $response = $this->request("POST", "/operators/fx-rate", [], $data);
-
         return FxRate::fromResponse($response);
     }
 
-
     /**
-     * @return array
+     * Retrieves list of every country supported by Reloadly
+     * @return Country[]
      */
-    public function getCountries() : array {
-
-        $response = $this->request("GET", "/countries");
-
-        $countries = [];
+    public function getCountries() : array
+    {
+        $countries  = [];
+        $response   = $this->request("GET", "/countries");
 
         if ($response != null && $response->getContent() != null) {
             foreach ($response->getContent() as $countryJson) {
-
-                $countries[] = Country::fromJson($countryJson);
-
+                $countries[] = Country::fromResponseData($countryJson);
             }
         }
-
         return $countries;
     }
-
 
     /**
      * Retrieves country details by querying Reloadly using the country's ISO 3166-1 code.
@@ -308,13 +300,11 @@ class Client {
      * @param   string $isoName
      * @return  Country
      */
-    public function getCountryByIso(string $isoName) : ?Country {
-
+    public function getCountryByIso(string $isoName) : ?Country
+    {
         $response = $this->request("GET", "/countries/".strtoupper($isoName));
-
         return Country::fromResponse($response);
     }
-
 
     /**
      * @param int $page
@@ -322,34 +312,33 @@ class Client {
      * @param bool $suggestedAmounts
      * @param bool $suggestedAmountsMap
      * @param bool $includeBundles
-     * @return array
+     * @return Operator[]
      */
-    public function getOperators(int $page = 1, int $size = 50, bool $suggestedAmounts = true, bool $suggestedAmountsMap = true, bool $includeBundles = true) : ?array {
-
+    public function getOperators(
+        int $page = 1,
+        int $size = 25,
+        bool $suggestedAmounts = true,
+        bool $suggestedAmountsMap = true,
+        bool $includeBundles = true
+    ) : ?array
+    {
         $params = [
             "page" => $page,
             "size" => $size,
-            "suggestedAmounts" => $suggestedAmounts,
-            "suggestedAmountsMap" => $suggestedAmountsMap,
-            "includeBundles" => $includeBundles
+            "suggestedAmounts"      => $suggestedAmounts,
+            "suggestedAmountsMap"   => $suggestedAmountsMap,
+            "includeBundles"        => $includeBundles
         ];
 
-        $response = $this->request("GET", "/operators", $params);
-
-        $operators = [];
+        $operators  = [];
+        $response   = $this->request("GET", "/operators", $params);
 
         if ($response != null && $response->getContent() != null) {
-            foreach ($response->getContent() as $jsonCollection) {
+            foreach ($response->getContent() as $operatorsResponse) {
+                if (!is_array($operatorsResponse)) continue;
 
-                if (!is_array($jsonCollection)) {
-
-                    $operators[] = Operator::fromJson($jsonCollection);
-
-                }
-                else {
-                    foreach ($jsonCollection as $json) {
-                        $operators[] = Operator::fromJson($json);
-                    }
+                foreach ($operatorsResponse as $data) {
+                    $operators[] = Operator::fromResponseData($data);
                 }
             }
         }
@@ -365,16 +354,20 @@ class Client {
      * @param bool $includeBundles
      * @return Operator
      */
-    public function getOperatorById(int $operator_id, bool $suggestedAmounts = true, bool $suggestedAmountsMap = true, bool $includeBundles = true) : ?Operator {
-
+    public function getOperatorById(
+        int $operator_id,
+        bool $suggestedAmounts = true,
+        bool $suggestedAmountsMap = true,
+        bool $includeBundles = true
+    ) : ?Operator
+    {
         $params = [
-            "suggestedAmounts" => $suggestedAmounts,
-            "suggestedAmountsMap" => $suggestedAmountsMap,
-            "includeBundles" => $includeBundles
+            "suggestedAmounts"      => $suggestedAmounts,
+            "suggestedAmountsMap"   => $suggestedAmountsMap,
+            "includeBundles"        => $includeBundles
         ];
 
         $response = $this->request("GET", "/operators/".$operator_id, $params);
-
         return Operator::fromResponse($response);
     }
 
@@ -387,7 +380,8 @@ class Client {
      * @param bool $includeBundles
      * @return Operator
      */
-    public function getOperatorByPhoneNumber(string $phoneNumber, string $countryIso, bool $suggestedAmounts = true, bool $suggestedAmountsMap = true, bool $includeBundles = true) : ?Operator {
+    public function getOperatorByPhoneNumber(string $phoneNumber, string $countryIso, bool $suggestedAmounts = true, bool $suggestedAmountsMap = true, bool $includeBundles = true) : ?Operator
+    {
 
         $params = [
             "suggestedAmounts" => $suggestedAmounts,
@@ -396,8 +390,6 @@ class Client {
         ];
 
         $response = $this->request("GET", "/operators/auto-detect/phone/{$phoneNumber}/countries/".strtoupper($countryIso), $params);
-
-        var_dump($response);
 
         return Operator::fromResponse($response);
     }
@@ -428,12 +420,12 @@ class Client {
 
                 if (!is_array($jsonCollection)) {
 
-                    $operators[] = Operator::fromJson($jsonCollection);
+                    $operators[] = Operator::fromResponseData($jsonCollection);
 
                 }
                 else {
                     foreach ($jsonCollection as $json) {
-                        $operators[] = Operator::fromJson($json);
+                        $operators[] = Operator::fromResponseData($json);
                     }
                 }
             }
@@ -446,7 +438,7 @@ class Client {
     /**
      * @param int $page
      * @param int $size
-     * @return array
+     * @return Promotion[]
      */
     public function getPromotions(int $page = 1, int $size = 50) : ?array {
 
@@ -464,12 +456,12 @@ class Client {
 
                 if (!is_array($jsonCollection)) {
 
-                    $promotions[] = Promotion::fromJson($jsonCollection);
+                    $promotions[] = Promotion::fromResponseData($jsonCollection);
 
                 }
                 else {
                     foreach ($jsonCollection as $json) {
-                        $promotions[] = Promotion::fromJson($json);
+                        $promotions[] = Promotion::fromResponseData($json);
                     }
                 }
             }
@@ -481,7 +473,7 @@ class Client {
 
     /**
      * @param string $country_iso
-     * @return array
+     * @return Promotion[]
      */
     public function getPromotionsByCountryIso(string $country_iso) : ?array {
 
@@ -491,16 +483,10 @@ class Client {
 
         if ($response != null && $response->getContent() != null) {
             foreach ($response->getContent() as $jsonCollection) {
+                if (!is_array($jsonCollection)) continue;
 
-                if (!is_array($jsonCollection)) {
-
-                    $promotions[] = Promotion::fromJson($jsonCollection);
-
-                }
-                else {
-                    foreach ($jsonCollection as $json) {
-                        $promotions[] = Promotion::fromJson($json);
-                    }
+                foreach ($jsonCollection as $json) {
+                    $promotions[] = Promotion::fromResponseData($json);
                 }
             }
         }
@@ -511,7 +497,7 @@ class Client {
 
     /**
      * @param int $operator_id
-     * @return array
+     * @return Promotion[]
      */
     public function getPromotionsByOperator(int $operator_id) : ?array {
 
@@ -521,16 +507,10 @@ class Client {
 
         if ($response != null && $response->getContent() != null) {
             foreach ($response->getContent() as $jsonCollection) {
+                if (!is_array($jsonCollection)) continue;
 
-                if (!is_array($jsonCollection)) {
-
-                    $promotions[] = Promotion::fromJson($jsonCollection);
-
-                }
-                else {
-                    foreach ($jsonCollection as $json) {
-                        $promotions[] = Promotion::fromJson($json);
-                    }
+                foreach ($jsonCollection as $json) {
+                    $promotions[] = Promotion::fromResponseData($json);
                 }
             }
         }
@@ -556,7 +536,7 @@ class Client {
      * @param DateTimeInterface $end_date_time
      * @param int $page
      * @param int $size
-     * @return array
+     * @return Transaction[]
      */
     public function getTransactions(DateTimeInterface $start_date_time, DateTimeInterface $end_date_time, int $page = 1, int $size = 50) : ?array {
 
@@ -574,15 +554,10 @@ class Client {
         if ($response != null && $response->getContent() != null) {
             foreach ($response->getContent() as $jsonCollection) {
 
-                if (!is_array($jsonCollection)) {
+                if (!is_array($jsonCollection)) continue;
 
-                    $transactions[] = Transaction::fromJson($jsonCollection);
-
-                }
-                else {
-                    foreach ($jsonCollection as $json) {
-                        $transactions[] = Transaction::fromJson($json);
-                    }
+                foreach ($jsonCollection as $json) {
+                    $transactions[] = Transaction::fromResponseData($json);
                 }
             }
         }
@@ -604,7 +579,7 @@ class Client {
 
     /**
      * @param int $operator_id
-     * @param int $amount
+     * @param float $amount
      * @param Phone $recipient_phone
      * @param Phone $sender_phone
      * @param string|null $custom_identifier
@@ -613,7 +588,7 @@ class Client {
      */
     public function topup(
         int $operator_id,
-        int $amount,
+        float $amount,
         Phone $recipient_phone,
         Phone $sender_phone,
         ?string $custom_identifier = null,
