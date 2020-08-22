@@ -16,13 +16,13 @@ class Promotion
     /** @var $operator_id int */
     private $operator_id;
 
-    /** @var $title string */
+    /** @var $title string|null */
     private $title;
 
-    /** @var $title2 string */
+    /** @var $title2 string|null */
     private $title2;
 
-    /** @var $description string */
+    /** @var $description string|null */
     private $description;
 
     /** @var $start_date string */
@@ -31,18 +31,18 @@ class Promotion
     /** @var $end_date string */
     private $end_date;
 
-    /** @var $denominations string */
+    /** @var $denominations|null string */
     private $denominations;
 
-    /** @var $local_denominations string */
+    /** @var $local_denominations string|null */
     private $local_denominations;
 
 
-    public static function fromJson($json) : ?Promotion
+    public static function fromResponseData($data) : ?Promotion
     {
         $promotion = new Promotion();
 
-        foreach ($json as $key => $value) {
+        foreach ($data as $key => $value) {
             $key = "set".$key;
 
             if (method_exists($promotion, $key)) {
@@ -56,7 +56,7 @@ class Promotion
 
     public static function fromResponse(?Response $response) : ?Promotion
     {
-        return ($response != null && $response->getContent() != null) ? Promotion::fromJson($response->getContent()) : null;
+        return ($response != null && $response->getContent() != null) ? Promotion::fromResponseData($response->getContent()) : null;
     }
 
     /**
@@ -96,9 +96,9 @@ class Promotion
     }
 
     /**
-     * @return string
+     * @return string|null
      */
-    public function getTitle(): string
+    public function getTitle(): ?string
     {
         return $this->title;
     }
@@ -107,16 +107,16 @@ class Promotion
      * @param string $title
      * @return Promotion
      */
-    public function setTitle(string $title): Promotion
+    public function setTitle(?string $title): Promotion
     {
         $this->title = $title;
         return $this;
     }
 
     /**
-     * @return string
+     * @return string|null
      */
-    public function getTitle2(): string
+    public function getTitle2(): ?string
     {
         return $this->title2;
     }
@@ -125,16 +125,16 @@ class Promotion
      * @param string $title2
      * @return Promotion
      */
-    public function setTitle2(string $title2): Promotion
+    public function setTitle2(?string $title2): Promotion
     {
         $this->title2 = $title2;
         return $this;
     }
 
     /**
-     * @return string
+     * @return string|null
      */
-    public function getDescription(): string
+    public function getDescription(): ?string
     {
         return $this->description;
     }
@@ -143,7 +143,7 @@ class Promotion
      * @param string $description
      * @return Promotion
      */
-    public function setDescription(string $description): Promotion
+    public function setDescription(?string $description): Promotion
     {
         $this->description = $description;
         return $this;
@@ -186,9 +186,9 @@ class Promotion
     }
 
     /**
-     * @return string
+     * @return string|null
      */
-    public function getDenominations(): string
+    public function getDenominations(): ?string
     {
         return $this->denominations;
     }
@@ -197,16 +197,16 @@ class Promotion
      * @param string $denominations
      * @return Promotion
      */
-    public function setDenominations(string $denominations): Promotion
+    public function setDenominations(?string $denominations): Promotion
     {
         $this->denominations = $denominations;
         return $this;
     }
 
     /**
-     * @return string
+     * @return string|null
      */
-    public function getLocalDenominations(): string
+    public function getLocalDenominations(): ?string
     {
         return $this->local_denominations;
     }
@@ -215,7 +215,7 @@ class Promotion
      * @param string $local_denominations
      * @return Promotion
      */
-    public function setLocalDenominations(string $local_denominations): Promotion
+    public function setLocalDenominations(?string $local_denominations): Promotion
     {
         $this->local_denominations = $local_denominations;
         return $this;

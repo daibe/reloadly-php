@@ -15,34 +15,34 @@ class Transaction
     /** @var $operator_transaction_id int */
     private $operator_transaction_id;
 
-    /** @var $custom_identifier string */
+    /** @var $custom_identifier string|null */
     private $custom_identifier;
 
-    /** @var $recipient_phone string */
+    /** @var $recipient_phone string|null */
     private $recipient_phone;
 
-    /** @var $sender_phone string */
+    /** @var $sender_phone string|null */
     private $sender_phone;
 
-    /** @var $country_code string */
+    /** @var $country_code string|null */
     private $country_code;
 
     /** @var $operator_id int */
     private $operator_id;
 
-    /** @var $operator_name string */
+    /** @var $operator_name string|null */
     private $operator_name;
 
     /** @var $discount float */
     private $discount;
 
-    /** @var $discount_currency_code string */
+    /** @var $discount_currency_code string|null */
     private $discount_currency_code;
 
     /** @var $requested_amount int */
     private $requested_amount;
 
-    /** @var $requested_amount_currency_code string */
+    /** @var $requested_amount_currency_code string|null */
     private $requested_amount_currency_code;
 
     /** @var $delivered_amount float */
@@ -54,15 +54,15 @@ class Transaction
     /** @var $transaction_date DateTimeInterface */
     private $transaction_date;
 
-    /** @var $pinDetail string */
+    /** @var $pinDetail string|null */
     private $pinDetail;
 
 
-    public static function fromJson($json) : ?Transaction
+    public static function fromResponseData($data) : ?Transaction
     {
         $transaction = new Transaction();
 
-        foreach ($json as $key => $value) {
+        foreach ($data as $key => $value) {
             $key = "set".$key;
 
             if (method_exists($transaction, $key)) {
@@ -76,7 +76,7 @@ class Transaction
 
     public static function fromResponse(?Response $response) : ?Transaction
     {
-        return ($response != null && $response->getContent() != null) ? Transaction::fromJson($response->getContent()) : null;
+        return ($response != null && $response->getContent() != null) ? Transaction::fromResponseData($response->getContent()) : null;
     }
 
 
@@ -92,7 +92,7 @@ class Transaction
      * @param int $transaction_id
      * @return Transaction
      */
-    public function setTransactionId(int $transaction_id): Transaction
+    public function setTransactionId(?int $transaction_id): Transaction
     {
         $this->transaction_id = $transaction_id;
         return $this;
@@ -110,16 +110,16 @@ class Transaction
      * @param int $operator_transaction_id
      * @return Transaction
      */
-    public function setOperatorTransactionId(int $operator_transaction_id): Transaction
+    public function setOperatorTransactionId(?int $operator_transaction_id): Transaction
     {
         $this->operator_transaction_id = $operator_transaction_id;
         return $this;
     }
 
     /**
-     * @return string
+     * @return string|null
      */
-    public function getCustomIdentifier(): string
+    public function getCustomIdentifier(): ?string
     {
         return $this->custom_identifier;
     }
@@ -128,16 +128,16 @@ class Transaction
      * @param string $custom_identifier
      * @return Transaction
      */
-    public function setCustomIdentifier(string $custom_identifier): Transaction
+    public function setCustomIdentifier(?string $custom_identifier): Transaction
     {
         $this->custom_identifier = $custom_identifier;
         return $this;
     }
 
     /**
-     * @return string
+     * @return string|null
      */
-    public function getRecipientPhone(): string
+    public function getRecipientPhone(): ?string
     {
         return $this->recipient_phone;
     }
@@ -146,16 +146,16 @@ class Transaction
      * @param string $recipient_phone
      * @return Transaction
      */
-    public function setRecipientPhone(string $recipient_phone): Transaction
+    public function setRecipientPhone(?string $recipient_phone): Transaction
     {
         $this->recipient_phone = $recipient_phone;
         return $this;
     }
 
     /**
-     * @return string
+     * @return string|null
      */
-    public function getSenderPhone(): string
+    public function getSenderPhone(): ?string
     {
         return $this->sender_phone;
     }
@@ -164,16 +164,16 @@ class Transaction
      * @param string $sender_phone
      * @return Transaction
      */
-    public function setSenderPhone(string $sender_phone): Transaction
+    public function setSenderPhone(?string $sender_phone): Transaction
     {
         $this->sender_phone = $sender_phone;
         return $this;
     }
 
     /**
-     * @return string
+     * @return string|null
      */
-    public function getCountryCode(): string
+    public function getCountryCode(): ?string
     {
         return $this->country_code;
     }
@@ -182,7 +182,7 @@ class Transaction
      * @param string $country_code
      * @return Transaction
      */
-    public function setCountryCode(string $country_code): Transaction
+    public function setCountryCode(?string $country_code): Transaction
     {
         $this->country_code = $country_code;
         return $this;
@@ -200,7 +200,7 @@ class Transaction
      * @param int $operator_id
      * @return Transaction
      */
-    public function setOperatorId(int $operator_id): Transaction
+    public function setOperatorId(?int $operator_id): Transaction
     {
         $this->operator_id = $operator_id;
         return $this;
@@ -209,7 +209,7 @@ class Transaction
     /**
      * @return string
      */
-    public function getOperatorName(): string
+    public function getOperatorName(): ?string
     {
         return $this->operator_name;
     }
@@ -218,7 +218,7 @@ class Transaction
      * @param string $operator_name
      * @return Transaction
      */
-    public function setOperatorName(string $operator_name): Transaction
+    public function setOperatorName(?string $operator_name): Transaction
     {
         $this->operator_name = $operator_name;
         return $this;
@@ -236,16 +236,16 @@ class Transaction
      * @param float $discount
      * @return Transaction
      */
-    public function setDiscount(float $discount): Transaction
+    public function setDiscount(?float $discount): Transaction
     {
         $this->discount = $discount;
         return $this;
     }
 
     /**
-     * @return string
+     * @return string|null
      */
-    public function getDiscountCurrencyCode(): string
+    public function getDiscountCurrencyCode(): ?string
     {
         return $this->discount_currency_code;
     }
@@ -254,7 +254,7 @@ class Transaction
      * @param string $discount_currency_code
      * @return Transaction
      */
-    public function setDiscountCurrencyCode(string $discount_currency_code): Transaction
+    public function setDiscountCurrencyCode(?string $discount_currency_code): Transaction
     {
         $this->discount_currency_code = $discount_currency_code;
         return $this;
@@ -272,16 +272,16 @@ class Transaction
      * @param int $requested_amount
      * @return Transaction
      */
-    public function setRequestedAmount(int $requested_amount): Transaction
+    public function setRequestedAmount(?int $requested_amount): Transaction
     {
         $this->requested_amount = $requested_amount;
         return $this;
     }
 
     /**
-     * @return string
+     * @return string|null
      */
-    public function getRequestedAmountCurrencyCode(): string
+    public function getRequestedAmountCurrencyCode(): ?string
     {
         return $this->requested_amount_currency_code;
     }
@@ -290,7 +290,7 @@ class Transaction
      * @param string $requested_amount_currency_code
      * @return Transaction
      */
-    public function setRequestedAmountCurrencyCode(string $requested_amount_currency_code): Transaction
+    public function setRequestedAmountCurrencyCode(?string $requested_amount_currency_code): Transaction
     {
         $this->requested_amount_currency_code = $requested_amount_currency_code;
         return $this;
@@ -315,9 +315,9 @@ class Transaction
     }
 
     /**
-     * @return string
+     * @return string|null
      */
-    public function getDeliveredAmountCurrencyCode(): string
+    public function getDeliveredAmountCurrencyCode(): ?string
     {
         return $this->delivered_amount_currency_code;
     }
@@ -354,9 +354,9 @@ class Transaction
     }
 
     /**
-     * @return string
+     * @return string|null
      */
-    public function getPinDetail(): string
+    public function getPinDetail(): ?string
     {
         return $this->pinDetail;
     }
@@ -365,7 +365,7 @@ class Transaction
      * @param string $pinDetail
      * @return Transaction
      */
-    public function setPinDetail(string $pinDetail): Transaction
+    public function setPinDetail(?string $pinDetail): Transaction
     {
         $this->pinDetail = $pinDetail;
         return $this;

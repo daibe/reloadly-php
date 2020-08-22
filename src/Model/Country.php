@@ -6,29 +6,23 @@ use ReloadlyPHP\Http\Response;
 /**
  * Class Country
  * @package ReloadlyPHP\Model
+ * @property string $operator_id
+ * @property string $name
+ * @property string $currency_code
+ * @property string $currency_name
+ * @property string $currency_symbol
+ * @property string $flag
+ * @property string $calling_codes
  */
 class Country
 {
 
-    /** @var $operator_id string */
     private $iso_name;
-
-    /** @var $name string */
     private $name;
-
-    /** @var $currency_code string */
     private $currency_code;
-
-    /** @var $currency_name string */
     private $currency_name;
-
-    /** @var $currency_symbol string */
     private $currency_symbol;
-
-    /** @var $flag string */
     private $flag;
-
-    /** @var $calling_codes string */
     private $calling_codes;
 
     /**
@@ -52,7 +46,7 @@ class Country
         $this->setCallingCodes($calling_codes);
     }
 
-    public static function fromJson($json) : ?Country
+    public static function fromResponseData($json) : ?Country
     {
         return new Country($json->isoName, $json->name, $json->currencyCode, $json->currencyName, $json->currencySymbol, $json->flag, $json->callingCodes);
     }
@@ -60,13 +54,13 @@ class Country
 
     public static function fromResponse(?Response $response) : ?Country
     {
-        return ($response != null && $response->getContent() != null) ? Country::fromJson($response->getContent()) : null;
+        return ($response != null && $response->getContent() != null) ? Country::fromResponseData($response->getContent()) : null;
     }
 
     /**
      * @return string
      */
-    public function getIsoName(): string
+    public function getIsoName(): ?string
     {
         return $this->iso_name;
     }
@@ -75,7 +69,7 @@ class Country
      * @param string $iso_name
      * @return Country
      */
-    public function setIsoName(string $iso_name): Country
+    public function setIsoName(?string $iso_name): Country
     {
         $this->iso_name = $iso_name;
         return $this;
@@ -84,7 +78,7 @@ class Country
     /**
      * @return string
      */
-    public function getName(): string
+    public function getName(): ?string
     {
         return $this->name;
     }
@@ -93,7 +87,7 @@ class Country
      * @param string $name
      * @return Country
      */
-    public function setName(string $name): Country
+    public function setName(?string $name): Country
     {
         $this->name = $name;
         return $this;
@@ -102,7 +96,7 @@ class Country
     /**
      * @return string
      */
-    public function getCurrencyCode(): string
+    public function getCurrencyCode(): ?string
     {
         return $this->currency_code;
     }
@@ -111,7 +105,7 @@ class Country
      * @param string $currency_code
      * @return Country
      */
-    public function setCurrencyCode(string $currency_code): Country
+    public function setCurrencyCode(?string $currency_code): Country
     {
         $this->currency_code = $currency_code;
         return $this;
@@ -120,7 +114,7 @@ class Country
     /**
      * @return string
      */
-    public function getCurrencyName(): string
+    public function getCurrencyName(): ?string
     {
         return $this->currency_name;
     }
@@ -129,7 +123,7 @@ class Country
      * @param string $currency_name
      * @return Country
      */
-    public function setCurrencyName(string $currency_name): Country
+    public function setCurrencyName(?string $currency_name): Country
     {
         $this->currency_name = $currency_name;
         return $this;
@@ -138,7 +132,7 @@ class Country
     /**
      * @return string
      */
-    public function getCurrencySymbol(): string
+    public function getCurrencySymbol(): ?string
     {
         return $this->currency_symbol;
     }
@@ -147,7 +141,7 @@ class Country
      * @param string $currency_symbol
      * @return Country
      */
-    public function setCurrencySymbol(string $currency_symbol): Country
+    public function setCurrencySymbol(?string $currency_symbol): Country
     {
         $this->currency_symbol = $currency_symbol;
         return $this;
@@ -156,7 +150,7 @@ class Country
     /**
      * @return string
      */
-    public function getFlag(): string
+    public function getFlag(): ?string
     {
         return $this->flag;
     }
@@ -165,7 +159,7 @@ class Country
      * @param string $flag
      * @return Country
      */
-    public function setFlag(string $flag): Country
+    public function setFlag(?string $flag): Country
     {
         $this->flag = $flag;
         return $this;

@@ -2,24 +2,21 @@
 namespace ReloadlyPHP\Model;
 
 use ReloadlyPHP\Http\Response;
+use stdClass;
 
 /**
  * Class FxRate
  * @package ReloadlyPHP\Model
+ * @property int $operator_id
+ * @property string $name
+ * @property string $fx_rate
+ * @property string $currency_code
  */
 class FxRate
 {
-
-    /** @var $operator_id int */
     private $operator_id;
-
-    /** @var $name string */
     private $name;
-
-    /** @var $fx_rate string */
     private $fx_rate;
-
-    /** @var $currency_code string */
     private $currency_code;
 
     /**
@@ -29,24 +26,28 @@ class FxRate
      * @param $fx_rate
      * @param $currency_code
      */
-    public function __construct($operator_id, $name, $fx_rate, $currency_code)
+    public function __construct($operator_id = null, $name = null, $fx_rate = null, $currency_code = null)
     {
-        $this->setOperatorId($operator_id);
-        $this->setCurrencyCode($currency_code);
         $this->setName($name);
         $this->setFxRate($fx_rate);
+        $this->setOperatorId($operator_id);
+        $this->setCurrencyCode($currency_code);
     }
 
-
-    public static function fromJson($json) : ?FxRate
+    public static function fromResponseData(stdClass $data) : ?FxRate
     {
-        return new FxRate($json->id, $json->name, $json->fxRate, $json->currencyCode);
+        return (new FxRate())
+                ->setName($data->name)
+                ->setFxRate($data->fxRate)
+                ->setOperatorId($data->id)
+                ->setCurrencyCode($data->currencyCode);
     }
-
 
     public static function fromResponse(?Response $response) : ?FxRate
     {
-        return ($response != null && $response->getContent() != null) ? FxRate::fromJson($response->getContent()) : null;
+        return  ($response != null && $response->getContent() != null)
+                    ? FxRate::fromResponseData($response->getContent())
+                    : null;
     }
 
     /**
@@ -61,7 +62,7 @@ class FxRate
      * @param int $operator_id
      * @return FxRate
      */
-    public function setOperatorId(int $operator_id): FxRate
+    public function setOperatorId(?int $operator_id): FxRate
     {
         $this->operator_id = $operator_id;
         return $this;
@@ -79,7 +80,7 @@ class FxRate
      * @param string $name
      * @return FxRate
      */
-    public function setName(string $name): FxRate
+    public function setName(?string $name): FxRate
     {
         $this->name = $name;
         return $this;
@@ -97,7 +98,7 @@ class FxRate
      * @param string $fx_rate
      * @return FxRate
      */
-    public function setFxRate($fx_rate): FxRate
+    public function setFxRate(?string $fx_rate): FxRate
     {
         $this->fx_rate = strval($fx_rate);
         return $this;
@@ -115,11 +116,10 @@ class FxRate
      * @param string $currency_code
      * @return FxRate
      */
-    public function setCurrencyCode(string $currency_code): FxRate
+    public function setCurrencyCode(?string $currency_code): FxRate
     {
         $this->currency_code = $currency_code;
         return $this;
     }
-
 
 }

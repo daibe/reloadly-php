@@ -8,9 +8,11 @@ class TopUpResponse
 
     /** @var $transaction_id int */
     private $transactionId;
+
     /** @var $operator_transaction_id int */
     private $operatorTransactionId;
-    /** @var $custom_identifier string */
+
+    /** @var $custom_identifier string|null */
     private $custom_identifier;
     /** @var $recipient_phone string */
     private $recipient_phone;
@@ -27,7 +29,7 @@ class TopUpResponse
     /** @var $operator_name string */
     private $operator_name;
 
-    /** @var $discount string */
+    /** @var $discount string|null */
     private $discount;
 
     /** @var $discount_currency_code string */
@@ -48,14 +50,14 @@ class TopUpResponse
     /** @var $transaction_date string */
     private $transaction_date;
 
-    /** @var $pin_detail string */
+    /** @var $pin_detail string|null */
     private $pin_detail;
 
-    public static function fromJson($json) : ?TopUpResponse
+    public static function fromResponseData($data) : ?TopUpResponse
     {
         $topUpResponse = new TopUpResponse();
 
-        foreach ($json as $key => $value) {
+        foreach ($data as $key => $value) {
             $key = "set".$key;
 
             if (method_exists($topUpResponse, $key)) {
@@ -69,7 +71,7 @@ class TopUpResponse
 
     public static function fromResponse(?Response $response) : ?TopUpResponse
     {
-        return ($response != null && $response->getContent() != null) ? TopUpResponse::fromJson($response->getContent()) : null;
+        return ($response != null && $response->getContent() != null) ? TopUpResponse::fromResponseData($response->getContent()) : null;
     }
 
 
@@ -103,16 +105,16 @@ class TopUpResponse
      * @param int $operatorTransactionId
      * @return TopUpResponse
      */
-    public function setOperatorTransactionId(int $operatorTransactionId): TopUpResponse
+    public function setOperatorTransactionId(?int $operatorTransactionId): TopUpResponse
     {
         $this->operatorTransactionId = $operatorTransactionId;
         return $this;
     }
 
     /**
-     * @return string
+     * @return string|null
      */
-    public function getCustomIdentifier(): string
+    public function getCustomIdentifier(): ?string
     {
         return $this->custom_identifier;
     }
@@ -344,9 +346,9 @@ class TopUpResponse
     }
 
     /**
-     * @return string
+     * @return string|null
      */
-    public function getPinDetail(): string
+    public function getPinDetail(): ?string
     {
         return $this->pin_detail;
     }
@@ -355,7 +357,7 @@ class TopUpResponse
      * @param string $pin_detail
      * @return TopUpResponse
      */
-    public function setPinDetail(string $pin_detail): TopUpResponse
+    public function setPinDetail(?string $pin_detail): TopUpResponse
     {
         $this->pin_detail = $pin_detail;
         return $this;
