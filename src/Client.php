@@ -416,17 +416,13 @@ class Client {
         $operators = [];
 
         if ($response != null && $response->getContent() != null) {
-            foreach ($response->getContent() as $jsonCollection) {
 
-                if (!is_array($jsonCollection)) {
+            foreach ($response->getContent() as $operatorsResponse) {
 
-                    $operators[] = Operator::fromResponseData($jsonCollection);
+                if (!is_array($operatorsResponse)) continue;
 
-                }
-                else {
-                    foreach ($jsonCollection as $json) {
-                        $operators[] = Operator::fromResponseData($json);
-                    }
+                foreach ($operatorsResponse as $data) {
+                    $operators[] = Operator::fromResponseData($data);
                 }
             }
         }
@@ -452,17 +448,12 @@ class Client {
         $promotions = [];
 
         if ($response != null && $response->getContent() != null) {
-            foreach ($response->getContent() as $jsonCollection) {
+            foreach ($response->getContent() as $promotionsResponse) {
 
-                if (!is_array($jsonCollection)) {
+                if (!is_array($promotionsResponse)) continue;
 
-                    $promotions[] = Promotion::fromResponseData($jsonCollection);
-
-                }
-                else {
-                    foreach ($jsonCollection as $json) {
-                        $promotions[] = Promotion::fromResponseData($json);
-                    }
+                foreach ($promotionsResponse as $data) {
+                    $promotions[] = Promotion::fromResponseData($data);
                 }
             }
         }
@@ -482,11 +473,11 @@ class Client {
         $promotions = [];
 
         if ($response != null && $response->getContent() != null) {
-            foreach ($response->getContent() as $jsonCollection) {
-                if (!is_array($jsonCollection)) continue;
+            foreach ($response->getContent() as $promotionsResponse) {
+                if (!is_array($promotionsResponse)) continue;
 
-                foreach ($jsonCollection as $json) {
-                    $promotions[] = Promotion::fromResponseData($json);
+                foreach ($promotionsResponse as $data) {
+                    $promotions[] = Promotion::fromResponseData($data);
                 }
             }
         }
@@ -506,11 +497,11 @@ class Client {
         $promotions = [];
 
         if ($response != null && $response->getContent() != null) {
-            foreach ($response->getContent() as $jsonCollection) {
-                if (!is_array($jsonCollection)) continue;
+            foreach ($response->getContent() as $promotionsResponse) {
+                if (!is_array($promotionsResponse)) continue;
 
-                foreach ($jsonCollection as $json) {
-                    $promotions[] = Promotion::fromResponseData($json);
+                foreach ($promotionsResponse as $data) {
+                    $promotions[] = Promotion::fromResponseData($data);
                 }
             }
         }
@@ -552,12 +543,11 @@ class Client {
         $transactions = [];
 
         if ($response != null && $response->getContent() != null) {
-            foreach ($response->getContent() as $jsonCollection) {
+            foreach ($response->getContent() as $transactionsResponse) {
+                if (!is_array($transactionsResponse)) continue;
 
-                if (!is_array($jsonCollection)) continue;
-
-                foreach ($jsonCollection as $json) {
-                    $transactions[] = Transaction::fromResponseData($json);
+                foreach ($transactionsResponse as $data) {
+                    $transactions[] = Transaction::fromResponseData($data);
                 }
             }
         }
