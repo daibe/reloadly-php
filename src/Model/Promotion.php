@@ -40,6 +40,8 @@ class Promotion
 
     public static function fromResponseData($data) : ?Promotion
     {
+        if (!$data) return null;
+
         $promotion = new Promotion();
 
         foreach ($data as $key => $value) {
@@ -71,7 +73,7 @@ class Promotion
      * @param int $promotion_id
      * @return Promotion
      */
-    public function setPromotionId(int $promotion_id): Promotion
+    public function setPromotionId(?int $promotion_id): Promotion
     {
         $this->promotion_id = $promotion_id;
         return $this;
@@ -89,7 +91,7 @@ class Promotion
      * @param int $operator_id
      * @return Promotion
      */
-    public function setOperatorId(int $operator_id): Promotion
+    public function setOperatorId(?int $operator_id): Promotion
     {
         $this->operator_id = $operator_id;
         return $this;
