@@ -62,7 +62,7 @@ and other best-practices for defining dependencies at [`getcomposer.org`](https:
 
     use ReloadlyPHP\Client;
     
-    // Instantiate ReloadPHP 
+    // Instantiate ReloadlyPHP 
     $reloadly = new Client('yourClientId', 'yourClientSecret');
 ```
 
