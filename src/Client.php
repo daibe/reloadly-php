@@ -71,8 +71,8 @@ class Client {
     ) {
         $this->environment  = $environment ? $environment : getenv();
         $audience           = ($debug)
-                                ? self::API_BASE_URI_SANDBOX
-                                : self::API_BASE_URI_PRODUCTION;
+            ? self::API_BASE_URI_SANDBOX
+            : self::API_BASE_URI_PRODUCTION;
 
         $this->clientId     = $this->getArg($clientId, self::ENV_CLIENT_ID);
         $this->clientSecret = $this->getArg($clientSecret, self::ENV_CLIENT_SECRET);
@@ -403,7 +403,12 @@ class Client {
      * @param bool $includeBundles
      * @return array
      */
-    public function getOperatorsByCountryIso(string $countryIso, bool $suggestedAmounts = true, bool $suggestedAmountsMap = true, bool $includeBundles = true) : ?array {
+    public function getOperatorsByCountryIso(
+        string $countryIso,
+        bool $suggestedAmounts = false,
+        bool $suggestedAmountsMap = false,
+        bool $includeBundles = false
+    ) : ?array {
 
         $params = [
             "suggestedAmounts" => $suggestedAmounts,
@@ -411,19 +416,16 @@ class Client {
             "includeBundles" => $includeBundles
         ];
 
-        $response = $this->request("GET", "/operators/countries/".strtoupper($countryIso), $params);
+        $response = $this->request("GET", "/operators/countries/{$countryIso}", $params);
 
         $operators = [];
 
         if ($response != null && $response->getContent() != null) {
 
             foreach ($response->getContent() as $operatorsResponse) {
+                if (!($operatorsResponse instanceof  \stdClass)) continue;
 
-                if (!is_array($operatorsResponse)) continue;
-
-                foreach ($operatorsResponse as $data) {
-                    $operators[] = Operator::fromResponseData($data);
-                }
+                $operators[] = Operator::fromResponseData($operatorsResponse);
             }
         }
 
