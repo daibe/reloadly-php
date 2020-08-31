@@ -197,7 +197,7 @@ class Client {
             if ($e->getResponse()->getStatusCode() == 401) {
                 $this->authenticate($clientId, $clientSecret);
             }
-            return null;
+            throw $e;
         }
         catch (GuzzleException $e) {
             throw new ReloadlyException($e->getMessage(), $e->getCode());
