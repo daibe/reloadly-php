@@ -50,20 +50,37 @@ class TopUpResponse
     /** @var $transaction_date string */
     private $transaction_date;
 
-    /** @var $pin_detail string|null */
-    private $pin_detail;
+    /** @var $pin_details string|null */
+    private $pin_details;
+
+    /** @var $recipient_email string|null */
+    private $recipient_email;
+
+    /** @var $balance_info array */
+    private $balance_info;
 
     public static function fromResponseData($data) : ?TopUpResponse
     {
-        $topUpResponse = new TopUpResponse();
 
-        foreach ($data as $key => $value) {
-            $key = "set".$key;
-
-            if (method_exists($topUpResponse, $key)) {
-                $topUpResponse->{$key}($value);
-            }
-        }
+        $topUpResponse = (new TopUpResponse())
+            ->setTransactionId($data->transactionId)
+            ->setCustomIdentifier($data->customIdentifier)
+            ->setRecipientPhone($data->recipientPhone)
+            ->setRecipientEmail($data->recipientEmail)
+            ->setSenderPhone($data->senderPhone)
+            ->setOperatorId($data->operatorId)
+            ->setOperatorName($data->operatorName)
+            ->setOperatorTransactionId($data->operatorTransactionId)
+            ->setCountryCode($data->countryCode)
+            ->setDiscount($data->discount)
+            ->setDiscountCurrencyCode($data->discountCurrencyCode)
+            ->setRequestedAmount($data->requestedAmount)
+            ->setRequestedAmountCurrencyCode($data->requestedAmountCurrencyCode)
+            ->setDeliveredAmount($data->deliveredAmount)
+            ->setDeliveredAmountCurrencyCode($data->deliveredAmountCurrencyCode)
+            ->setTransactionDate($data->transactionDate)
+            ->setPinDetails($data->pinDetail)
+            ->setBalanceInfo($data->balanceInfo);
 
         return $topUpResponse;
     }
@@ -71,7 +88,9 @@ class TopUpResponse
 
     public static function fromResponse(?Response $response) : ?TopUpResponse
     {
-        return ($response != null && $response->getContent() != null) ? TopUpResponse::fromResponseData($response->getContent()) : null;
+        return ($response != null && $response->getContent() != null)
+                ? TopUpResponse::fromResponseData($response->getContent())
+                : null;
     }
 
 
@@ -120,12 +139,12 @@ class TopUpResponse
     }
 
     /**
-     * @param string $custom_identifier
+     * @param string $customIdentifier
      * @return TopUpResponse
      */
-    public function setCustomIdentifier(string $custom_identifier): TopUpResponse
+    public function setCustomIdentifier(string $customIdentifier): TopUpResponse
     {
-        $this->custom_identifier = $custom_identifier;
+        $this->custom_identifier = $customIdentifier;
         return $this;
     }
 
@@ -138,12 +157,30 @@ class TopUpResponse
     }
 
     /**
-     * @param string $recipient_phone
+     * @param string|null $recipientPhone
      * @return TopUpResponse
      */
-    public function setRecipientPhone(string $recipient_phone): TopUpResponse
+    public function setRecipientPhone(?string $recipientPhone): TopUpResponse
     {
-        $this->recipient_phone = $recipient_phone;
+        $this->recipient_phone = $recipientPhone;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getRecipientEmail(): string
+    {
+        return $this->recipient_email;
+    }
+
+    /**
+     * @param string|null $recipientEmail
+     * @return TopUpResponse
+     */
+    public function setRecipientEmail(?string $recipientEmail): TopUpResponse
+    {
+        $this->recipient_email = $recipientEmail;
         return $this;
     }
 
@@ -156,12 +193,12 @@ class TopUpResponse
     }
 
     /**
-     * @param string $sender_phone
+     * @param string $senderPhone
      * @return TopUpResponse
      */
-    public function setSenderPhone(string $sender_phone): TopUpResponse
+    public function setSenderPhone(string $senderPhone): TopUpResponse
     {
-        $this->sender_phone = $sender_phone;
+        $this->sender_phone = $senderPhone;
         return $this;
     }
 
@@ -174,12 +211,12 @@ class TopUpResponse
     }
 
     /**
-     * @param string $country_code
+     * @param string $countryCode
      * @return TopUpResponse
      */
-    public function setCountryCode(string $country_code): TopUpResponse
+    public function setCountryCode(string $countryCode): TopUpResponse
     {
-        $this->country_code = $country_code;
+        $this->country_code = $countryCode;
         return $this;
     }
 
@@ -192,12 +229,12 @@ class TopUpResponse
     }
 
     /**
-     * @param int $operator_id
+     * @param int $operatorId
      * @return TopUpResponse
      */
-    public function setOperatorId(int $operator_id): TopUpResponse
+    public function setOperatorId(int $operatorId): TopUpResponse
     {
-        $this->operator_id = $operator_id;
+        $this->operator_id = $operatorId;
         return $this;
     }
 
@@ -210,12 +247,12 @@ class TopUpResponse
     }
 
     /**
-     * @param string $operator_name
+     * @param string $operatorName
      * @return TopUpResponse
      */
-    public function setOperatorName(string $operator_name): TopUpResponse
+    public function setOperatorName(string $operatorName): TopUpResponse
     {
-        $this->operator_name = $operator_name;
+        $this->operator_name = $operatorName;
         return $this;
     }
 
@@ -246,12 +283,12 @@ class TopUpResponse
     }
 
     /**
-     * @param string $discount_currency_code
+     * @param string $discountCurrencyCode
      * @return TopUpResponse
      */
-    public function setDiscountCurrencyCode(string $discount_currency_code): TopUpResponse
+    public function setDiscountCurrencyCode(?string $discountCurrencyCode): TopUpResponse
     {
-        $this->discount_currency_code = $discount_currency_code;
+        $this->discount_currency_code = $discountCurrencyCode;
         return $this;
     }
 
@@ -264,12 +301,12 @@ class TopUpResponse
     }
 
     /**
-     * @param float $requested_amount
+     * @param float $requestedAmount
      * @return TopUpResponse
      */
-    public function setRequestedAmount(float $requested_amount): TopUpResponse
+    public function setRequestedAmount(?float $requestedAmount): TopUpResponse
     {
-        $this->requested_amount = $requested_amount;
+        $this->requested_amount = $requestedAmount;
         return $this;
     }
 
@@ -282,12 +319,12 @@ class TopUpResponse
     }
 
     /**
-     * @param string $requested_amount_currency_code
+     * @param string $requestedAmountCurrencyCode
      * @return TopUpResponse
      */
-    public function setRequestedAmountCurrencyCode(string $requested_amount_currency_code): TopUpResponse
+    public function setRequestedAmountCurrencyCode(?string $requestedAmountCurrencyCode): TopUpResponse
     {
-        $this->requested_amount_currency_code = $requested_amount_currency_code;
+        $this->requested_amount_currency_code = $requestedAmountCurrencyCode;
         return $this;
     }
 
@@ -300,12 +337,12 @@ class TopUpResponse
     }
 
     /**
-     * @param float $delivered_amount
+     * @param float $deliveredAmount
      * @return TopUpResponse
      */
-    public function setDeliveredAmount(float $delivered_amount): TopUpResponse
+    public function setDeliveredAmount(?float $deliveredAmount): TopUpResponse
     {
-        $this->delivered_amount = $delivered_amount;
+        $this->delivered_amount = $deliveredAmount;
         return $this;
     }
 
@@ -318,12 +355,12 @@ class TopUpResponse
     }
 
     /**
-     * @param string $delivered_amount_currency_code
+     * @param string $deliveredAmountCurrencyCode
      * @return TopUpResponse
      */
-    public function setDeliveredAmountCurrencyCode(string $delivered_amount_currency_code): TopUpResponse
+    public function setDeliveredAmountCurrencyCode(?string $deliveredAmountCurrencyCode): TopUpResponse
     {
-        $this->delivered_amount_currency_code = $delivered_amount_currency_code;
+        $this->delivered_amount_currency_code = $deliveredAmountCurrencyCode;
         return $this;
     }
 
@@ -336,30 +373,49 @@ class TopUpResponse
     }
 
     /**
-     * @param string $transaction_date
+     * @param string $transactionDate
      * @return TopUpResponse
      */
-    public function setTransactionDate(string $transaction_date): TopUpResponse
+    public function setTransactionDate(string $transactionDate): TopUpResponse
     {
-        $this->transaction_date = $transaction_date;
+        $this->transaction_date = $transactionDate;
         return $this;
     }
 
     /**
      * @return string|null
      */
-    public function getPinDetail(): ?string
+    public function getPinDetails(): ?string
     {
-        return $this->pin_detail;
+        return $this->pin_details;
     }
 
     /**
-     * @param string $pin_detail
+     * @param string|null $pinDetails
      * @return TopUpResponse
      */
-    public function setPinDetail(?string $pin_detail): TopUpResponse
+    public function setPinDetails(?string $pinDetails): TopUpResponse
     {
-        $this->pin_detail = $pin_detail;
+        $this->pin_details = $pinDetails;
+        return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function getBalanceInfo(): ?array
+    {
+        return $this->balance_info;
+    }
+
+    /**
+     * @param array $balanceInfo
+     * @return TopUpResponse
+     */
+    public function setBalanceInfo($balanceInfo): TopUpResponse
+    {
+        $_balanceInfo = json_encode($balanceInfo);
+        $this->balance_info = json_decode($_balanceInfo, true);
         return $this;
     }
 
