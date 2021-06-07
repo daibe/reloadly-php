@@ -27,6 +27,9 @@ class Operator
     /** @var $supportsLocalAmounts bool */
     private $supportsLocalAmounts;
 
+    /** @var $supportsGeographicalRechargePlans bool */
+    private $supportsGeographicalRechargePlans;
+
     /** @var $denominationType string */
     private $denominationType;
 
@@ -39,6 +42,9 @@ class Operator
     /** @var $destinationCurrencyCode string */
     private $destinationCurrencyCode;
 
+    /** @var $destinationCurrencySymbol string */
+    private $destinationCurrencySymbol;
+
     /** @var $commission float */
     private $commission;
 
@@ -50,6 +56,9 @@ class Operator
 
     /** @var $mostPopularAmount float */
     private $mostPopularAmount;
+
+    /** @var $mostPopularLocalAmount float */
+    private $mostPopularLocalAmount;
 
     /** @var $minAmount float */
     private $minAmount;
@@ -84,6 +93,9 @@ class Operator
     /** @var $localFixedAmountsDescriptions array */
     private $localFixedAmountsDescriptions;
 
+    /** @var $geographicalRechargePlans array */
+    private $geographicalRechargePlans;
+
     /** @var $suggestedAmountsMap array */
     private $suggestedAmountsMap;
 
@@ -93,17 +105,37 @@ class Operator
 
     public static function fromResponseData($data) : ?Operator
     {
-        $operator = new Operator();
-
-        foreach ($data as $key => $value) {
-            $key = "set".$key;
-
-            if (method_exists($operator, $key)) {
-                $operator->{$key}($value);
-            }
-        }
-
-        return $operator;
+        return (new Operator())
+            ->setName($data->name)
+            ->setOperatorId($data->id)
+            ->setData($data->data)
+            ->setPin($data->pin)
+            ->setSupportsGeographicalRechargePlans($data->supportsGeographicalRechargePlans)
+            ->setDenominationType($data->denominationType)
+            ->setSupportsLocalAmounts($data->supportsLocalAmounts)
+            ->setSenderCurrencyCode($data->senderCurrencyCode)
+            ->setSenderCurrencySymbol($data->senderCurrencySymbol)
+            ->setDestinationCurrencyCode($data->destinationCurrencyCode)
+            ->setDestinationCurrencySymbol($data->destinationCurrencySymbol)
+            ->setInternationalDiscount($data->internationalDiscount)
+            ->setMostPopularAmount($data->mostPopularAmount)
+            ->setLocalDiscount($data->localDiscount)
+            ->setMostPopularLocalAmount($data->mostPopularLocalAmount)
+            ->setMinAmount($data->minAmount)
+            ->setMaxAmount($data->maxAmount)
+            ->setLocalMinAmount($data->localMinAmount)
+            ->setLocalMaxAmount($data->localMaxAmount)
+            ->setCountry($data->country)
+            ->setFx($data->fx)
+            ->setLogoUrls($data->logoUrls)
+            ->setFixedAmounts($data->fixedAmounts)
+            ->setFixedAmountsDescriptions($data->fixedAmountsDescriptions)
+            ->setLocalFixedAmounts($data->localFixedAmounts)
+            ->setLocalFixedAmountsDescriptions($data->localFixedAmountsDescriptions)
+            ->setSuggestedAmountsMap($data->suggestedAmountsMap)
+            ->setGeographicalRechargePlans($data->geographicalRechargePlans)
+            ->setPromotions($data->promotions)
+            ;
     }
 
 
@@ -205,6 +237,24 @@ class Operator
     /**
      * @return bool
      */
+    public function isSupportsGeographicalRechargePlans(): bool
+    {
+        return $this->pin;
+    }
+
+    /**
+     * @param bool $pin
+     * @return Operator
+     */
+    public function setSupportsGeographicalRechargePlans(?bool $supportsGeographicalRechargePlans): Operator
+    {
+        $this->supportsGeographicalRechargePlans = $supportsGeographicalRechargePlans;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
     public function isSupportsLocalAmounts(): bool
     {
         return $this->supportsLocalAmounts;
@@ -293,6 +343,24 @@ class Operator
     }
 
     /**
+     * @return string
+     */
+    public function getDestinationCurrencySymbol(): string
+    {
+        return $this->destinationCurrencySymbol;
+    }
+
+    /**
+     * @param string $destinationCurrencySymbol
+     * @return Operator
+     */
+    public function setDestinationCurrencySymbol(?string $destinationCurrencySymbol): Operator
+    {
+        $this->destinationCurrencySymbol = $destinationCurrencySymbol;
+        return $this;
+    }
+
+    /**
      * @return float
      */
     public function getCommission(): ?float
@@ -361,6 +429,24 @@ class Operator
     public function setMostPopularAmount(?float $mostPopularAmount): Operator
     {
         $this->mostPopularAmount = $mostPopularAmount;
+        return $this;
+    }
+
+    /**
+     * @return float
+     */
+    public function getMostPopularLocalAmount(): ?float
+    {
+        return $this->mostPopularLocalAmount;
+    }
+
+    /**
+     * @param float $mostPopularAmount
+     * @return Operator
+     */
+    public function setMostPopularLocalAmount(?float $mostPopularLocalAmount): Operator
+    {
+        $this->mostPopularLocalAmount = $mostPopularLocalAmount;
         return $this;
     }
 
@@ -590,6 +676,25 @@ class Operator
     /**
      * @return array
      */
+    public function getGeographicalRechargePlans(): ?array
+    {
+        return $this->geographicalRechargePlans;
+    }
+
+    /**
+     * @param array $suggestedAmountsMap
+     * @return Operator
+     */
+    public function setGeographicalRechargePlans($geographicalRechargePlans): Operator
+    {
+        $_geographicalRechargePlans = json_encode($geographicalRechargePlans);
+        $this->geographicalRechargePlans = json_decode($_geographicalRechargePlans);
+        return $this;
+    }
+
+    /**
+     * @return array
+     */
     public function getPromotions(): ?array
     {
         return $this->promotions;
@@ -603,7 +708,7 @@ class Operator
     {
         $this->promotions = $promotions;
         $_promotions = json_encode($promotions);
-        $this->localFixedAmountsDescriptions = json_decode($_promotions);
+        $this->promotions = json_decode($_promotions);
         return $this;
     }
 
