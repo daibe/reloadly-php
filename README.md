@@ -1,9 +1,7 @@
 ReloadlyPHP
 ===================
 ----------------------------------
-[![Latest Stable Version](https://poser.pugx.org/phpunit/phpunit/v)](//packagist.org/packages/phpunit/phpunit)
-[![Total Downloads](https://poser.pugx.org/phpunit/phpunit/downloads)](//packagist.org/packages/phpunit/phpunit)
-[![License](https://poser.pugx.org/phpunit/phpunit/license)](//packagist.org/packages/phpunit/phpunit)
+[![Latest Stable Version](https://poser.pugx.org/daibe/reloadly-php/v)](//packagist.org/packages/daibe/reloadly-php) [![Total Downloads](https://poser.pugx.org/daibe/reloadly-php/downloads)](//packagist.org/packages/daibe/reloadly-php) [![Latest Unstable Version](https://poser.pugx.org/daibe/reloadly-php/v/unstable)](//packagist.org/packages/daibe/reloadly-php) [![License](https://poser.pugx.org/daibe/reloadly-php/license)](//packagist.org/packages/daibe/reloadly-php)
 
 
 ## Documentation
@@ -165,4 +163,4 @@ or fork the repository, perform modifications to your fork then request a merge.
 
 
 [apidocs]: https://developers.reloadly.com/
-[libdocs]: https://daibe.github.io/reloadly-php
+[libdocs]: https://daibe.github.io/reloadly-php/
