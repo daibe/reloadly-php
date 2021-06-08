@@ -668,8 +668,8 @@ class Operator
      */
     public function setSuggestedAmountsMap($suggestedAmountsMap): Operator
     {
-        $_suggestedAmountsMap = json_encode($suggestedAmountsMap);
-        $this->localFixedAmountsDescriptions = json_decode($_suggestedAmountsMap);
+        $_suggestedAmountsMap = json_encode($suggestedAmountsMap); 
+        $this->suggestedAmountsMap = json_decode($_suggestedAmountsMap);
         return $this;
     }
 
