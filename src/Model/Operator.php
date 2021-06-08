@@ -593,7 +593,7 @@ class Operator
     public function setFixedAmounts($fixedAmounts): Operator
     {
         $_fixedAmounts = json_encode($fixedAmounts);
-        $this->fixedAmounts = json_decode($_fixedAmounts);
+        $this->fixedAmounts = json_decode($_fixedAmounts, true);
         return $this;
     }
 
@@ -612,7 +612,7 @@ class Operator
     public function setFixedAmountsDescriptions($fixedAmountsDescriptions): Operator
     {
         $_fixedAmountsDescriptions = json_encode($fixedAmountsDescriptions);
-        $this->fixedAmountsDescriptions = json_decode($_fixedAmountsDescriptions);
+        $this->fixedAmountsDescriptions = json_decode($_fixedAmountsDescriptions, true);
         return $this;
     }
 
@@ -631,7 +631,7 @@ class Operator
     public function setLocalFixedAmounts($localFixedAmounts): Operator
     {
         $_localFixedAmounts = json_encode($localFixedAmounts);
-        $this->localFixedAmounts = json_decode($_localFixedAmounts);
+        $this->localFixedAmounts = json_decode($_localFixedAmounts, true);
         return $this;
     }
 
@@ -650,7 +650,7 @@ class Operator
     public function setLocalFixedAmountsDescriptions($localFixedAmountsDescriptions): Operator
     {
         $_localFixedAmountsDescriptions = json_encode($localFixedAmountsDescriptions);
-        $this->localFixedAmountsDescriptions = json_decode($_localFixedAmountsDescriptions);
+        $this->localFixedAmountsDescriptions = json_decode($_localFixedAmountsDescriptions, true);
         return $this;
     }
 
@@ -669,7 +669,7 @@ class Operator
     public function setSuggestedAmountsMap($suggestedAmountsMap): Operator
     {
         $_suggestedAmountsMap = json_encode($suggestedAmountsMap); 
-        $this->suggestedAmountsMap = json_decode($_suggestedAmountsMap);
+        $this->suggestedAmountsMap = json_decode($_suggestedAmountsMap, true);
         return $this;
     }
 
@@ -688,7 +688,7 @@ class Operator
     public function setGeographicalRechargePlans($geographicalRechargePlans): Operator
     {
         $_geographicalRechargePlans = json_encode($geographicalRechargePlans);
-        $this->geographicalRechargePlans = json_decode($_geographicalRechargePlans);
+        $this->geographicalRechargePlans = json_decode($_geographicalRechargePlans, true);
         return $this;
     }
 
@@ -708,7 +708,7 @@ class Operator
     {
         $this->promotions = $promotions;
         $_promotions = json_encode($promotions);
-        $this->promotions = json_decode($_promotions);
+        $this->promotions = json_decode($_promotions, true);
         return $this;
     }
 
