@@ -113,18 +113,18 @@ class TopUpResponse
     }
 
     /**
-     * @return int
+     * @return string
      */
-    public function getOperatorTransactionId(): int
+    public function getOperatorTransactionId(): string
     {
         return $this->operatorTransactionId;
     }
 
     /**
-     * @param int $operatorTransactionId
+     * @param string $operatorTransactionId
      * @return TopUpResponse
      */
-    public function setOperatorTransactionId(?int $operatorTransactionId): TopUpResponse
+    public function setOperatorTransactionId(?string $operatorTransactionId): TopUpResponse
     {
         $this->operatorTransactionId = $operatorTransactionId;
         return $this;
